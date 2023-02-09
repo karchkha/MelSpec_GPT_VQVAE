@@ -7,15 +7,18 @@ Audio Generation model working with GPT3 and VQVAE compressed representation of 
 
 Welcome to the MelSpec_GPT_VQVAE repository! 
 
+The project investigates the application of Transformer-based GPT3 models as a generative method for audio generation. The audio signal is represented as 128 distinct tokens, which are compressed versions of mel-spectrograms. The study builds upon the Veqtor quantized encoder/decoder architecture described in the paper "Taming Visually Guided Sound Generation" (https://arxiv.org/abs/2110.08791) and its corresponding repository (https://github.com/v-iashin/SpecVQGAN).
 
+The repository consists of two parts/directions:
 
-This project uses as a base model the Veqtor quantized encoder/decoder architecture party taken from in the paper "Taming Visually Guided Sound Generation" (https://arxiv.org/abs/2110.08791) and its corresponding repository (https://github.com/v-iashin/SpecVQGAN).
+The first part focuses on the evaluation of GPT3 as a generative model when conditioned on audio class categories, such as "dog barking," "baby crying," "sneezing," and "fireworks," among others. This part of the project serves as a preliminary examination of the feasibility of audio generation, with the potential for future studies on time-aligned/controlled audio and music generation utilizing these models.
 
-the repository cotanins transformer model to generate sound bal abla bla aaa
+The second part of the project involves the utilization of a Variational Autoencoder (VAE), with GPT3 modules in both the encoder and decoder sides. The encoder consists of an unmasked transformer that compresses the audio token sequence into a 1024-dimensional latent representation, which is then combined with a variance and a noise term to serve as the conditioning input for the decoder. The decoder comprises a masked autoregressive transformer that aims to reconstruct the whole token sequence, which is then translated back to a mel-spectrogram using a pretrained VQVAE decoder, followed by audio generation using a Mel_GAN vocoder. Both VQVAE amd Mel_GAN models are pretrained here and are not trained in this repository. For the VQVAE (pre-)training, plase see my other repository: (https://github.com/karchkha/MelSpec_VQVAE).
 
-write here description
+The second part of the project investigates a VAE generative model for the task of incorporating distributed latent representations of entire audio sequences. Unlike the standard autoregresive tranformers, which generates audio sequences one token at a time, this model also considers global audio representation and holistic properties of audio sequences such as audio content, style, and high-level features. The conversion of prior audio sequences into a compact representation via the encoder enables the generation of diverse and coherent audio sequences through deterministic decoder. By exploring the latent space, it is possible to create novel audio that interpolate between known audio sequences. This project presents techniques to address the difficult learning problem traditionally posed by VAE sequence models, and aims to demonstrate the effectiveness of the model in imputing missing audio tokens in the future.
 
 # Installation
+
 To install MelSpec_VQVAE, follow these steps:
 
 Clone the repository to your local machine
@@ -35,29 +38,58 @@ $ pip -r install requirements.txt
 
 # Training
 
-The training process of the VQVAE model is controlled by the following arguments:
+The training procedure for the first component of the project, where GPT-3 is conditioned on audio class categories, is governed by the following parameters:
 
 * `dataset`: The dataset to be used for training the model. This argument is required.
 * `experiment`: The name of the experiment. This argument is also required and will be used to name the checkpoints and tensorboard logs.
-* `batch_size`: The number of samples in a batch. The default value is 3.
-* `embedding_dim`: The size of the embedding vector. The default value is 256.
-* `num_embeddings`: The size of the codebook. The default value is 128.
-* `learning_rate`: The learning rate for the optimizer. The default value is 1e-6.
-* `epochs`: The number of epochs to train the model. The default value is 100.
+* `train`: Indicates whether to start the training process. If set to 1, the training process will begin, if set to 0, the training process will not begin.
+* `resume`: If set, the training process will resume from the specified checkpoint.
+* `workers`: Number of workers for data processing.
+* `eval`: If set to 1, the model will be evaluated, if set to 0, the model will not be evaluated.
+* `test`: If set to 1, the model will be tested, if set to 0, the model will not be tested.
+* `logging_frequency`: The number of steps for text logging.
+* `reconstruct_spec`: The model checkpoint path for mel-spectrogram reconstruction.
+* `vocoder`: The model checkpoint for the vocoder for audio reconstruction.
+
+For Example the running with default velues would look like:
+```bash
+
+$ python GPT_train.py \
+          --experiment {experiment_name} \
+          --dataset {dataset_name} \
+          --logging_frequency 200 \
+          --workers 2 \
+          --train 1 \
+          --vocoder 'vocoder/logs/vggsound/' \
+          --eval 0 \
+          --test 0 \
+          --reconstruct_spec "lightning_logs/2021-06-06T19-42-53_vas_codebook.pt" \
+          --resume "lightning_logs/{experiment_name}/checkpoints/version_{version_number}/last.ckpt"
+```
+
+* `dataset`: The dataset to be used for training the model. This argument is required.
+* `experiment`: The name of the experiment. This argument is also required and will be used to name the checkpoints and tensorboard logs.
 * `train`: A flag to start the training process. The default value is False.
 * `resume`: A checkpoint file to resume training from. The default value is None.
 * `workers`: The number of workers to use for data loading. The default value is 4.
 * `eval`: A flag to evaluate the model. The default value is False.
 * `test`: A flag to test the model. The default value is False.
-* `disc_conditional`: A flag to indicate if the discriminator should be conditioned on the input. The default value is False.
-* `disc_in_channels`: The number of input channels for the discriminator. The default value is 1.
-* `disc_start`: The training step at which the discriminator training begins. The default value is 2001.
-* `disc_weight`: The weight for the discriminator loss in the overall loss function. The default value is 0.8.
-* `codebook_weight`: The weight for the codebook loss in the overall loss function. The default value is 1.0.
-* `min_adapt_weight`: The minimum weight for the adversarial loss between the VAE and the discriminator. The default value is 0.0.
-* `max_adapt_weight`: The maximum weight for the adversarial loss between the VAE and the discriminator. The default value is 1.0.
-* `noise_sigma`: The standard deviation of the Gaussian noise added to the codebook. The default value is 0.
-* `cd_rand_res`: A flag to randomly assign existing vectors from the output to the codebook's unused vectors. The default value is 0.
+* `logging_frequency`: The number of steps for text logging.
+* `reconstruct_spec`: The model checkpoint path for mel-spectrogram reconstruction.
+* `vocoder`: The model checkpoint for the vocoder for audio reconstruction.
+
+
+* `load_path`:: The path to the model checkpoint from where we take pretrained encoder on the 2nd stage of the training. The type of the argument is str. The default value is an empty string.
+
+* `test_interpolation`: Whether to test and visualize an interpolation between 2 sounds. The type of the argument is int. The default value is False.
+* 
+
+* `warm_up`: This argument takes an integer as input, and specifies the number of annealing epochs for a process. The default value is set to 10.
+* `kl_start`: This argument takes a float as input, and specifies the starting KL weight for a process. The default value is set to 1.0.
+* `beta`:  This argument takes a float as input, and determines if the model is an autoencoder (AE) beta = 0.0 or a variational autoencoder (VAE) beta = 1.0. The default value is set to 1.0.
+* `fb`: this argument controls the regularisation for KL loss. particularly the KL Thresholding / Free Bits (FB). FB is a modification of the KL-Divergence term used in the ELBO loss, which is commonly used in variational autoencoders. The FB technique replaces the KL term with a hinge loss term, which maximizes each component of the original KL term with a constant. The hinge loss is defined as: max[threshold; KL(q(z_i|x) || p(z_i))], where threshold is the target rate, and z_i is the i-th dimension in the latent variable z. fb = 0 no fb; fb = 1 means fb and fb = 2 means max(target_kl, kl) for each dimension
+* `target_kl`: This argument takes a float as input, and sets the target KL of the free bits trick. The default value is set to -1, which means the target KL is not set.
+
 
 The training process can be started by passing the appropriate values for these arguments to the script. The model will be trained on the specified dataset for the specified number of epochs and the checkpoints will be saved in the directory specified by experiment. 
 
