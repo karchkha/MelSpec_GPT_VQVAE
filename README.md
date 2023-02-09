@@ -156,7 +156,7 @@ cd ./data
 bash ./download_vas_features.sh
 ```
 
-"To speed up and lighten the training process, audio spectrograms in the database are converted to sequence tokens. These tokens are used in conjunction with the database for training and evaluation. To perform the conversion, run the following commands:
+To speed up and lighten the training process, audio spectrograms in the database are converted to sequence tokens. These tokens are used in conjunction with the database for training and evaluation. To perform the conversion, run the following commands:
 
 ```bash
 $ cd feature_extraction
