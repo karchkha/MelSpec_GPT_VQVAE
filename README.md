@@ -7,7 +7,7 @@ Audio Generation model working with GPT3 and VQVAE compressed representation of 
 
 Welcome to the MelSpec_GPT_VQVAE repository! 
 
-The project investigates the application of Transformer-based GPT3 models as a generative method for audio generation. The audio signal is represented as 128 distinct tokens, which are compressed versions of mel-spectrograms. The study builds upon the Veqtor quantized encoder/decoder architecture described my other repository: https://github.com/karchkha/MelSpec_VQVAE, which in turn is partially taken from the paper "Taming Visually Guided Sound Generation" (https://arxiv.org/abs/2110.08791) and its corresponding repository (https://github.com/v-iashin/SpecVQGAN).
+The project investigates the application of Transformer-based GPT3 models as a generative method for audio generation. The audio signal is represented as 128 unique tokens, which are compressed versions of mel-spectrograms. The study builds upon the Veqtor quantized encoder/decoder architecture described my other repository: https://github.com/karchkha/MelSpec_VQVAE, which in turn is partially taken from the paper "Taming Visually Guided Sound Generation" (https://arxiv.org/abs/2110.08791) and its corresponding repository (https://github.com/v-iashin/SpecVQGAN).
 
 The repository consists of two parts/directions:
 
@@ -155,6 +155,16 @@ cd ./data
 # ~7GB we only download spectrograms
 bash ./download_vas_features.sh
 ```
+
+"To speed up and lighten the training process, audio spectrograms in the database are converted to sequence tokens. These tokens are used in conjunction with the database for training and evaluation. To perform the conversion, run the following commands:
+
+```bash
+$ cd feature_extraction
+
+$ python extract_codes.py
+```
+This will generate additional files in the database where the token codes will be saved.
+
 # Vocoder
 
 For reconstructing Mel_spectrograms to Audio the Mel_GAN vocoder is used. The pretrained vocoder from: https://github.com/v-iashin/SpecVQGAN/tree/main/vocoder/logs/vggsound is present in the repository in folder: vocoder/logs/vggsound folder. 
