@@ -165,7 +165,7 @@ $ python extract_codes.py --model_dir {VQVAE_model_directory}
 ```
 This will generate additional files in the database where the token codes will be saved.
 
-# VQVAE for Mel_spectrogram reconstruction
+# VQVAE
 
 As previously stated, a pre-trained VQVAE model from a separate repository is utilized for reconstructing spectrograms and converting the database to codes. To obtain this pre-trained model, you have the option of either using the repository at https://github.com/karchkha/MelSpec_VQVAE to train the model yourself, or downloading it from the provided link and placing it in the desired directory (I have it in the lightning_logs directory).
 
