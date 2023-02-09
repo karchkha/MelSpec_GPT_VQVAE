@@ -1,0 +1,11 @@
+albumentations==1.2.1
+librosa==0.8.1
+matplotlib==3.2.2
+numpy==1.21.6
+opencv_python==4.6.0.66
+Pillow==9.4.0
+pytorch_lightning==1.9.0
+PyYAML==6.0
+soundfile==0.11.0
+torch==1.13.1+cu116
+torchvision==0.14.1+cu116
