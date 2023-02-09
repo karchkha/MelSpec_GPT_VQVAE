@@ -65,7 +65,7 @@ $ python GPT_train.py \
           --vocoder 'vocoder/logs/vggsound/' \
           --eval 0 \
           --test 0 \
-          --reconstruct_spec "lightning_logs/2021-06-06T19-42-53_vas_codebook.pt" \
+          --reconstruct_spec "{VQVAE_model_directory}" \
           --resume "lightning_logs/{experiment_name}/checkpoints/version_{version_number}/last.ckpt"
 ```
 
@@ -104,7 +104,7 @@ $ python GPT_VAE_train.py \
           --logging_frequency 200 \
           --workers 8 \
           --train 1 \
-          --reconstruct_spec "lightning_logs/2021-06-06T19-42-53_vas_codebook.pt" \
+          --reconstruct_spec "{VQVAE_model_directory}" \
           --vocoder 'vocoder/logs/vggsound/' \
           --eval 0 \
           --test 0 \
@@ -131,7 +131,7 @@ $ python GPT_VAE_train.py \
     --eval 0 \
     --test 0 \
     --load_path "lightning_logs/{experiment_name_1}/checkpoints/version_{version_number}/last.ckpt" \
-    --reconstruct_spec "lightning_logs/2021-06-06T19-42-53_vas_codebook.pt" \
+    --reconstruct_spec "{VQVAE_model_directory}" \
     --vocoder 'vocoder/logs/vggsound/' \
     --resume "lightning_logs/{experiment_name_2}/checkpoints/version_{version_number}/last.ckpt" \
     --test_interpolation 1
@@ -161,9 +161,17 @@ To speed up and lighten the training process, audio spectrograms in the database
 ```bash
 $ cd feature_extraction
 
-$ python extract_codes.py
+$ python extract_codes.py --model_dir {VQVAE_model_directory}
 ```
 This will generate additional files in the database where the token codes will be saved.
+
+# VQVAE for Mel_spectrogram reconstruction
+
+As previously stated, a pre-trained VQVAE model from a separate repository is utilized for reconstructing spectrograms and converting the database to codes. To obtain this pre-trained model, you have the option of either using the repository at https://github.com/karchkha/MelSpec_VQVAE to train the model yourself, or downloading it from the provided link and placing it in the desired directory (I have it in the lightning_logs directory).
+
+Please use the link:
+
+https://drive.google.com/file/d/1-3tH3JSzQ0mN6vhaoihkMcoRUZKM-Lj6/view?usp=sharing
 
 # Vocoder
 
