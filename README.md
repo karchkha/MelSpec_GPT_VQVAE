@@ -7,7 +7,7 @@ Audio Generation model working with GPT3 and VQVAE compressed representation of 
 
 Welcome to the MelSpec_GPT_VQVAE repository! 
 
-The project investigates the application of Transformer-based GPT3 models as a generative method for audio generation. The audio signal is represented as 128 distinct tokens, which are compressed versions of mel-spectrograms. The study builds upon the Veqtor quantized encoder/decoder architecture described in the paper "Taming Visually Guided Sound Generation" (https://arxiv.org/abs/2110.08791) and its corresponding repository (https://github.com/v-iashin/SpecVQGAN).
+The project investigates the application of Transformer-based GPT3 models as a generative method for audio generation. The audio signal is represented as 128 distinct tokens, which are compressed versions of mel-spectrograms. The study builds upon the Veqtor quantized encoder/decoder architecture described my other repository: https://github.com/karchkha/MelSpec_VQVAE, which in turn is partially taken from the paper "Taming Visually Guided Sound Generation" (https://arxiv.org/abs/2110.08791) and its corresponding repository (https://github.com/v-iashin/SpecVQGAN).
 
 The repository consists of two parts/directions:
 
@@ -36,7 +36,7 @@ Navigate to the project directory and install the required dependencies
 $ pip -r install requirements.txt
 ```
 
-# Training
+# Training GPT CLASS
 
 The training procedure for the first component of the project, where GPT-3 is conditioned on audio class categories, is governed by the following parameters:
 
@@ -50,6 +50,8 @@ The training procedure for the first component of the project, where GPT-3 is co
 * `logging_frequency`: The number of steps for text logging.
 * `reconstruct_spec`: The model checkpoint path for mel-spectrogram reconstruction.
 * `vocoder`: The model checkpoint for the vocoder for audio reconstruction.
+
+The training process can be started by passing the appropriate values for these arguments to the script. The model will be trained on the specified dataset for the specified number of epochs and the checkpoints will be saved in the directory specified by experiment. The details of the model architecture can be found in the config directory in the file config_GPT_{dataset_name}.py. This file also allows for changes to be made to the architecture if desired.
 
 For Example the running with default velues would look like:
 ```bash
@@ -67,6 +69,10 @@ $ python GPT_train.py \
           --resume "lightning_logs/{experiment_name}/checkpoints/version_{version_number}/last.ckpt"
 ```
 
+# Training GPT VAE
+
+The training procedure VAE component of the project is governed by the following parameters:
+
 * `dataset`: The dataset to be used for training the model. This argument is required.
 * `experiment`: The name of the experiment. This argument is also required and will be used to name the checkpoints and tensorboard logs.
 * `train`: A flag to start the training process. The default value is False.
@@ -77,30 +83,57 @@ $ python GPT_train.py \
 * `logging_frequency`: The number of steps for text logging.
 * `reconstruct_spec`: The model checkpoint path for mel-spectrogram reconstruction.
 * `vocoder`: The model checkpoint for the vocoder for audio reconstruction.
-
-
 * `load_path`:: The path to the model checkpoint from where we take pretrained encoder on the 2nd stage of the training. The type of the argument is str. The default value is an empty string.
-
 * `test_interpolation`: Whether to test and visualize an interpolation between 2 sounds. The type of the argument is int. The default value is False.
-* 
-
 * `warm_up`: This argument takes an integer as input, and specifies the number of annealing epochs for a process. The default value is set to 10.
 * `kl_start`: This argument takes a float as input, and specifies the starting KL weight for a process. The default value is set to 1.0.
 * `beta`:  This argument takes a float as input, and determines if the model is an autoencoder (AE) beta = 0.0 or a variational autoencoder (VAE) beta = 1.0. The default value is set to 1.0.
-* `fb`: this argument controls the regularisation for KL loss. particularly the KL Thresholding / Free Bits (FB). FB is a modification of the KL-Divergence term used in the ELBO loss, which is commonly used in variational autoencoders. The FB technique replaces the KL term with a hinge loss term, which maximizes each component of the original KL term with a constant. The hinge loss is defined as: max[threshold; KL(q(z_i|x) || p(z_i))], where threshold is the target rate, and z_i is the i-th dimension in the latent variable z. fb = 0 no fb; fb = 1 means fb and fb = 2 means max(target_kl, kl) for each dimension
+* `fb`: this argument controls the regularisation for KL loss. particularly the KL Thresholding / Free Bits (FB). FB is a modification of the KL-Divergence term used in the ELBO loss, which is commonly used in variational autoencoders. The FB technique replaces the KL term with a hinge loss term, which maximizes each component of the original KL term with a constant. The hinge loss is defined as: max[threshold; KL(q(z_i|x) || p(z_i))], where threshold is the target rate, and z_i is the i-th dimension in the latent variable z. In the code argument fb = 0 means no fb; fb = 1 means fb and fb = 2 means max(target_kl, kl) for each dimension.
 * `target_kl`: This argument takes a float as input, and sets the target KL of the free bits trick. The default value is set to -1, which means the target KL is not set.
 
 
-The training process can be started by passing the appropriate values for these arguments to the script. The model will be trained on the specified dataset for the specified number of epochs and the checkpoints will be saved in the directory specified by experiment. 
+The training process can be started by passing the appropriate values for these arguments to the script. The model will be trained on the specified dataset for the specified number of epochs and the checkpoints will be saved in the directory specified by experiment. The details of the model architecture can be found in the config directory in the file config_GPT_VAE_{dataset_name}.py. This file also allows for changes to be made to the architecture if desired.
 
-For Example the running with default velues would look like:
+To avoid the problem of collapsing posterior, the training process is split into two stages 
+
+First, we train a simple autoencoder For Example the running with default velues would look like:
 
 ```bash
-python train.py --experiment {experiment_name} \
-                    --dataset {dataset_name} \
-                    --train 1 \
-                    --eval 0 \
-                    --resume "lightning_logs/{experiment_name}/checkpoints/version_{version_number}/last.ckpt" \
+$ python GPT_VAE_train.py \
+          --experiment {experiment_name_1} \
+          --dataset {dataset_name} \
+          --beta 0 \
+          --logging_frequency 200 \
+          --workers 8 \
+          --train 1 \
+          --reconstruct_spec "lightning_logs/2021-06-06T19-42-53_vas_codebook.pt" \
+          --vocoder 'vocoder/logs/vggsound/' \
+          --eval 0 \
+          --test 0 \
+          --test_interpolation 1 \
+          --resume "lightning_logs/{experiment_name_1}/checkpoints/version_{version_number}/last.ckpt" \
+
+```
+During the second stage of training, a variational autoencoder is trained with its encoder initialized by the encoder of the simple autoencoder trained in stage one. To further prevent the encoder from collapsing, the methods of KL weight annealing and Free Bits (FB) are employed. For Example the running with default velues would look like:
+
+```bash
+$ python GPT_VAE_train.py \
+    --experiment {experiment_name_2} \
+    --dataset {dataset_name} \
+    --kl_start 0 \
+    --warm_up 10 \
+    --target_kl 8 \
+    --fb 2 \
+    --logging_frequency 200 \
+    --workers 8 \
+    --train 1 \
+    --eval 0 \
+    --test 0 \
+    --load_path "lightning_logs/{experiment_name_1}/checkpoints/version_{version_number}/last.ckpt" \
+    --reconstruct_spec "lightning_logs/2021-06-06T19-42-53_vas_codebook.pt" \
+    --vocoder 'vocoder/logs/vggsound/' \
+    --resume "lightning_logs/{experiment_name_2}/checkpoints/version_{version_number}/last.ckpt" \
+    --test_interpolation 1
 ```
 
 The model's performance can be monitored using Tensorboard. The the loss and other metrics are logged during the training.
