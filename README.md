@@ -94,9 +94,7 @@ The training procedure VAE component of the project is governed by the following
 
 The training process can be started by passing the appropriate values for these arguments to the script. The model will be trained on the specified dataset for the specified number of epochs and the checkpoints will be saved in the directory specified by experiment. The details of the model architecture can be found in the config directory in the file config_GPT_VAE_{dataset_name}.py. This file also allows for changes to be made to the architecture if desired.
 
-To avoid the problem of collapsing posterior, the training process is split into two stages 
-
-First, we train a simple autoencoder For Example the running with default velues would look like:
+To avoid the problem of collapsing posterior, the training process is split into two stages. First, we train a simple autoencoder For Example the running with default velues would look like:
 
 ```bash
 $ python GPT_VAE_train.py \
@@ -114,7 +112,10 @@ $ python GPT_VAE_train.py \
           --resume "lightning_logs/{experiment_name_1}/checkpoints/version_{version_number}/last.ckpt" \
 
 ```
-During the second stage of training, a variational autoencoder is trained with its encoder initialized by the encoder of the simple autoencoder trained in stage one. To further prevent the encoder from collapsing, the methods of KL weight annealing and Free Bits (FB) are employed. For Example the running with default velues would look like:
+
+Please note that setting the value of beta to 0 will result in the above model becoming a simple autoencoder (AE), rather than a variational autoencoder (VAE).
+
+During the second stage of training, a variational autoencoder is trained with its encoder initialized by the encoder of the simple autoencoder trained in stage one. To further prevent the encoder from collapsing, the methods of KL weight annealing and Free Bits (FB) are employed. An example of running the model with default values would look like this:
 
 ```bash
 $ python GPT_VAE_train.py \
@@ -136,10 +137,10 @@ $ python GPT_VAE_train.py \
     --test_interpolation 1
 ```
 
-The model's performance can be monitored using Tensorboard. The the loss and other metrics are logged during the training.
+The performance of the model can be monitored using Tensorboard. During training, the loss and other metrics, as well as the mel-spectrogram images and reconstructed audio, are logged and can be viewed in Tensorboard.
 
 ```bash
-tensorboard --logdir lightning_logs --bind_all
+$ tensorboard --logdir lightning_logs --bind_all
 ```
 There are few differnt models but I ended up using big_model_attn_gan.py. This one works more-less well. Takes very long to train though.
 
