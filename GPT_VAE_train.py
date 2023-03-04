@@ -165,7 +165,7 @@ def main(args):
     trainer = pl.Trainer(default_root_dir= "lightning_logs", 
                         accelerator="cuda" if args.cuda else "cpu" , #'gpu',
                         max_epochs= args.epochs,
-                        callbacks=[checkpoint_callback, lr_monitor, callbeck_of_my_drm, TtLogg], # early_stopping], #RichProgressBar(leave=True)],
+                        callbacks=[checkpoint_callback, lr_monitor, TtLogg], #callbeck_of_my_drm,         # early_stopping], #RichProgressBar(leave=True)],
                         logger = logger,
                         num_sanity_val_steps=0,
                         devices=-1,

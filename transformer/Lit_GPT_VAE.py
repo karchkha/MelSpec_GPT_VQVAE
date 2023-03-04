@@ -115,9 +115,9 @@ class GPT_VAE(pl.LightningModule):
         Returns: List1
             List1: a list of decoded word sequence
         """
-        is_taining = self.training
-        if is_taining:
-          self.eval()
+        # is_taining = self.training
+        # if is_taining:
+        #   self.eval()
         
         z_start_indices = torch.empty((z.size(0),0), dtype=torch.int64).to(self.args.device)
 
@@ -136,8 +136,8 @@ class GPT_VAE(pl.LightningModule):
                                                 sample=False,
                                                 )
 
-        if is_taining:
-          self.train()
+        # if is_taining:
+        #   self.train()
 
         return index_sampled, att_dec
             
@@ -260,6 +260,8 @@ class GPT_VAE(pl.LightningModule):
         report_num_words = (sent_len - 1) * batch_size
         report_num_sents = batch_size
         
+        #fake_loss_kl = loss_kl.sum(dim=1)   #### this is just in case for cases we dont use fake loss
+
         if self.args.beta == 0:
             if self.args.iw_train_nsamples < 0:
                 loss, loss_rc, loss_kl = self.loss(batch_data, self.kl_weight, nsamples=self.args.nsamples)
@@ -283,7 +285,8 @@ class GPT_VAE(pl.LightningModule):
                 loss_rc = self.decoder.reconstruct_error(batch_data, z).mean(dim=1)	
                 loss = loss_rc + self.kl_weight * fake_loss_kl
                 # pdb.set_trace()
-
+                self.log("train/fake_loss_kl", fake_loss_kl.mean(), prog_bar=True, logger=True, on_step=True, on_epoch=True)
+            
             elif self.args.fb == 3:	
                 loss, loss_rc, loss_kl = self.loss(batch_data, self.kl_weight, nsamples=self.args.nsamples)	
                 kl_mask = (loss_kl.mean() > self.args.target_kl).float()	
@@ -309,6 +312,7 @@ class GPT_VAE(pl.LightningModule):
         self.log("train/loss_rc", report_rec_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
         self.log("train/loss_kl", report_kl_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
         self.log("train/kl_weight",  self.kl_weight, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+        # self.log("train/fake_loss_kl", fake_loss_kl.mean(), prog_bar=True, logger=True, on_step=True, on_epoch=True)
         
         return loss
         

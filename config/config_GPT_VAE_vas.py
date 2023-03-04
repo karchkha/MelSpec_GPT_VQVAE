@@ -5,7 +5,7 @@ params={
     'n_head': 16,
     'n_embd': 1024,
     'learning_rate': 1e-6,
-    'epochs': 66,
+    'epochs': 400,
     'batch_size': 2,
     'spec_dir_path':'./data/vas/features/*/melspec_10s_22050hz',
     'sample_rate': 22050,

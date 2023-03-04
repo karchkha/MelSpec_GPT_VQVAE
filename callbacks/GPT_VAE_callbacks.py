@@ -162,9 +162,6 @@ class TextLogger(Callback):
 
         with torch.no_grad():
 
-
-            
-            
             ############################################## Greedy reconstruct ##############################################################
             ################################################################################################################################
 
@@ -221,8 +218,8 @@ class TextLogger(Callback):
             ############################################## beam reconstruct ##############################################################
             ################################################################################################################################
 
-            if self.args.test_interpolation:
-                self.audio_interpolation(model = pl_module, batch = batch, batch_idx = batch_idx, split = split, strategy = "beam")
+            # if self.args.test_interpolation:
+            #     self.audio_interpolation(model = pl_module, batch = batch, batch_idx = batch_idx, split = split, strategy = "beam")
 
             ############# codebook reconstruction ##########################
             codes, atts = pl_module.reconstruct(codes_from_data, "beam")
@@ -286,49 +283,32 @@ class TextLogger(Callback):
                 # pl_module.logger.experiment.add_audio(f'{split}/epoch-{pl_module.current_epoch}/step-{batch_idx}/sample_from_prior_audio', waves, batch_idx, 22050)
                 pl_module.logger.experiment.add_audio(f'{split}/beam_sample_from_prior_audio', waves, pl_module.global_step, 22050)
 
-                
-
-
         if is_train:
             pl_module.train()
             
     def audio_interpolation(self, model, batch, batch_idx, split, strategy):
 
         spec = batch['image']
-
+        
         spec_from = spec[0].unsqueeze(0).unsqueeze(0).to(self.args.device)
         spec_to = spec[1].unsqueeze(0).unsqueeze(0).to(self.args.device)
             
         ###### get codebook of those data  ###
         
-
         codebook_from = self.vqvae_model.encode(spec_from)
         _, _, info = self.vqvae_model._vq_vae(codebook_from)
         codebook_from = info[2].squeeze(1).unsqueeze(0)
-        
+        codebook_from = model.code_reader(codebook_from)
 
         codebook_to = self.vqvae_model.encode(spec_to)
         _, _, info = self.vqvae_model._vq_vae(codebook_to)
         codebook_to = info[2].squeeze(1).unsqueeze(0)     
- 
- 
-        # ### reading codes from database directly because specs are not converted well when converting only parts of it :))
-        # codes_from_data = model.get_input(batch)
-        # codebook_from = codes_from_data[0].unsqueeze(0)
-        # codebook_to = codes_from_data [5].unsqueeze(0)        
-        
-        
-        ###### get z of those data  ######
-        
-        # z_from, _ = model.encode(codebook_from)                     ############################????????????????????????????????????????????????#@@@@@@@@@@@@@@
-        # z_to, _ = model.encode(codebook_to)                       ########## might have to use: self.sample_from_inference(x).squeeze(1) @########################
-        
-        
-        # pdb.set_trace()
-        
+        codebook_to = model.code_reader(codebook_to)
+
         z_from = model.sample_from_inference(codebook_from) #.squeeze(1) 
         z_to = model.sample_from_inference(codebook_to) #.squeeze(1)
         
+
         n = 0
         # ##### display 1 original audio
         # ##### display 1 original spec 
@@ -343,8 +323,9 @@ class TextLogger(Callback):
             
             n = n+1            
             z = v * z_to + (1 - v) * z_from
-            # pdb.set_trace()
+
             codes, _ = model.decode(z, strategy)    
+            # pdb.set_trace() 
 
             if self.args.reconstruct_spec !="":
                 spec_sampled = self.codes_to_spec(codes, self.vqvae_model, model)
