@@ -78,6 +78,7 @@ The training procedure VAE component of the project is governed by the following
 * `train`: A flag to start the training process. The default value is False.
 * `resume`: A checkpoint file to resume training from. The default value is None.
 * `workers`: The number of workers to use for data loading. The default value is 4.
+* `gpus`: The list of available gpus to be used for training. The default value is 0. For 3 gpus, argumnet would be --gpus 0 1 2 . 
 * `eval`: A flag to evaluate the model. The default value is False.
 * `test`: A flag to test the model. The default value is False.
 * `logging_frequency`: The number of steps for text logging.
@@ -100,6 +101,7 @@ To avoid the problem of collapsing posterior, the training process is split into
 $ python GPT_VAE_train.py \
           --experiment {experiment_name_1} \
           --dataset {dataset_name} \
+          --gpus 0 1 2 \
           --beta 0 \
           --logging_frequency 200 \
           --workers 8 \
@@ -121,6 +123,7 @@ During the second stage of training, a variational autoencoder is trained with i
 $ python GPT_VAE_train.py \
     --experiment {experiment_name_2} \
     --dataset {dataset_name} \
+    --gpus 0 1 2 \
     --kl_start 0 \
     --warm_up 10 \
     --target_kl 8 \
@@ -164,6 +167,8 @@ $ cd feature_extraction
 $ python extract_codes.py --model_dir {VQVAE_model_directory}
 ```
 This will generate additional files in the database where the token codes will be saved.
+
+TODO: adding vggsound data and running model on it.
 
 # VQVAE
 

@@ -305,10 +305,10 @@ class GPT_VAE(pl.LightningModule):
         
         train_loss = report_loss / report_num_sents
         
-        self.log("train/loss", train_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log("train/loss_rc", report_rec_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log("train/loss_kl", report_kl_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log("train/kl_weight",  self.kl_weight, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+        self.log("train/loss", train_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("train/loss_rc", report_rec_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("train/loss_kl", report_kl_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("train/kl_weight",  self.kl_weight, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
         
         return loss
         
@@ -351,10 +351,10 @@ class GPT_VAE(pl.LightningModule):
                 report_loss = loss.item() / report_num_sents	
 
         
-        self.log("loss", report_loss, prog_bar=False, logger=False, on_step=True, on_epoch=True) # this one is for chekpointing and earlistopping
-        self.log("val/loss", report_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log("val/loss_rc", report_rec_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log("val/loss_kl", report_kl_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+        self.log("loss", report_loss, prog_bar=False, logger=False, on_step=True, on_epoch=True, sync_dist=True) # this one is for chekpointing and earlistopping
+        self.log("val/loss", report_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("val/loss_rc", report_rec_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("val/loss_kl", report_kl_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
         
         return {"val_loss": loss, "val_loss_rc": loss_rc, "val_loss_kl": loss_kl, "report_num_words": report_num_words, "report_num_sents": report_num_sents }
         
@@ -380,7 +380,7 @@ class GPT_VAE(pl.LightningModule):
         self.rec_loss = report_rec_loss / report_num_sents
         self.ppl = torch.exp(self.nll * report_num_sents / report_num_words) #np.exp
         
-        print("i'm in validation_epoch_endin model")
+#         print("i'm in validation_epoch_endin model")
 
 #################################  maybe this helps with memory problem #######################    
     
@@ -1001,6 +1001,14 @@ class GPT_VAE(pl.LightningModule):
         val_data = self.data.val_dataset 
         self.len_val_data = len(val_data)    
         loader =  self.data.val_dataloader()
+        
+        return loader
+
+    def val_dataloader_shuffled(self):
+        
+        val_data = self.data.val_dataset 
+        self.len_val_data = len(val_data)    
+        loader =  self.data.val_dataloader_shuffled()
         
         return loader
         

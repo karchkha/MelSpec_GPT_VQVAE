@@ -133,7 +133,11 @@ class DataModule(pl.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=self.batch_size,
                           num_workers=self.num_workers, worker_init_fn=self.worker_init_fn, drop_last = True)
-    
+
+    def val_dataloader_shuffled(self): ### I added this just for an experiment
+        return DataLoader(self.val_dataset, batch_size=self.batch_size,
+                          num_workers=self.num_workers, worker_init_fn=self.worker_init_fn, drop_last = True, shuffle=True)
+        
     def test_dataloader(self):
         return DataLoader(self.test_dataset, batch_size=self.batch_size,
                           num_workers=self.num_workers, worker_init_fn=self.worker_init_fn, drop_last = True)

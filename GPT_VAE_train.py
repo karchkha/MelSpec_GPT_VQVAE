@@ -17,6 +17,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import Callback
 import pytorch_lightning as pl
+from pytorch_lightning import seed_everything
 
 # from exp_utils import create_exp_dir
 from utils import uniform_initializer, xavier_normal_initializer, calc_iwnll, calc_mi, calc_au, sample_sentences, visualize_latent, reconstruct
@@ -25,13 +26,14 @@ from utils import uniform_initializer, xavier_normal_initializer, calc_iwnll, ca
 
 ns=2
 
-
 def init_config():
     parser = argparse.ArgumentParser(description='VAE mode collapse study')
 
     # model hyperparameters
     parser.add_argument('--dataset', type=str, required=True, help='dataset to use')
     parser.add_argument('--experiment', type=str, required=True, default="yahoo", help='experiment name')
+    parser.add_argument('--gpus', nargs='+', type=int, default=[0], help='GPU device IDs')
+
 
     # optimization parameters
     parser.add_argument('--momentum', type=float, default=0, help='sgd momentum')
@@ -89,14 +91,12 @@ def init_config():
     # set args.cuda
     args.cuda = torch.cuda.is_available()
 
-    # set seeds
-    # seed_set = [783435, 101, 202, 303, 404, 505, 606, 707, 808, 909]
-    # args.seed = seed_set[args.taskid]
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    if args.cuda:
-        torch.cuda.manual_seed(args.seed)
-        torch.backends.cudnn.deterministic = True
+    # np.random.seed(args.seed)
+    # torch.manual_seed(args.seed)
+    # if args.cuda:
+    #     torch.cuda.manual_seed(args.seed)
+    #     torch.backends.cudnn.deterministic = True
+    seed_everything(args.seed)
 
     # load config file into args
     config_file = "config.config_GPT_VAE_%s" % args.dataset
@@ -150,7 +150,7 @@ def main(args):
     lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval="step", log_momentum=False)
     logger = TensorBoardLogger(save_dir = "lightning_logs/"+ args.experiment  + "-" + args.dataset, name = 'TensorBoardLoggs') 
     checkpoint_callback = ModelCheckpoint(
-                                        save_top_k = 0,
+                                        save_top_k = 1,
                                         monitor="loss",
                                         mode="min",
                                         save_last= True,
@@ -160,21 +160,23 @@ def main(args):
                                           
     early_stopping = EarlyStopping('loss', patience = 10)
     
-    # bar = LitProgressBar()
+    torch.set_float32_matmul_precision('medium')   #######??????????????????????????????????????????????????????????????????????????????
     
     trainer = pl.Trainer(default_root_dir= "lightning_logs", 
-                        accelerator="cuda" if args.cuda else "cpu" , #'gpu',
+                        accelerator="gpu" if args.cuda else "cpu" , #'gpu',
                         max_epochs= args.epochs,
-                        callbacks=[checkpoint_callback, lr_monitor, callbeck_of_my_drm, TtLogg], # early_stopping], #RichProgressBar(leave=True)],
+                        callbacks=[checkpoint_callback, lr_monitor, TtLogg], #callbeck_of_my_drm], #early_stopping],
                         logger = logger,
                         num_sanity_val_steps=0,
-                        devices=-1,
-                        # gradient_clip_val=clip_grad,
-                        # limit_train_batches = 2,
-                        # limit_val_batches= 2,
-                        #  limit_test_batches= 2,
-                        #  log_every_n_steps=2,
-                        #  fast_dev_run = True,
+                        devices= args.gpus if args.cuda else "auto", # [0, 1, 2],
+                        strategy="ddp_find_unused_parameters_false" if len(args.gpus)>1 else None, #"ddp",
+#                         gpus = [0,1,2],
+#                         gradient_clip_val=clip_grad,
+#                         limit_train_batches = 400,
+#                         limit_val_batches= 400,
+#                          limit_test_batches= 2,
+#                          log_every_n_steps=2,
+#                          fast_dev_run = True,
                         )
     
      ############################## training ##############################
