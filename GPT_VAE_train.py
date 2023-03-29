@@ -160,7 +160,7 @@ def main(args):
                                           
     early_stopping = EarlyStopping('loss', patience = 10)
     
-    torch.set_float32_matmul_precision('medium')   #######??????????????????????????????????????????????????????????????????????????????
+    torch.set_float32_matmul_precision('medium')
     
     trainer = pl.Trainer(default_root_dir= "lightning_logs", 
                         accelerator="gpu" if args.cuda else "cpu" , #'gpu',
@@ -169,8 +169,8 @@ def main(args):
                         logger = logger,
                         num_sanity_val_steps=0,
                         devices= args.gpus if args.cuda else "auto", # [0, 1, 2],
-                        strategy="ddp_find_unused_parameters_false" if len(args.gpus)>1 else None, #"ddp",
-#                         gpus = [0,1,2],
+                        strategy="ddp_find_unused_parameters_false" if len(args.gpus)>1 else None,
+                        # precision = 16,
 #                         gradient_clip_val=clip_grad,
 #                         limit_train_batches = 400,
 #                         limit_val_batches= 400,
@@ -231,46 +231,47 @@ def main(args):
     
     
     ####################################### inference #####################################
-    
-    if args.reconstruct_from != "":
-        print('begin decoding')
-        vae.load_from_checkpoint(args.reconstruct_from, args = args)
-        vae.eval().to(args.device)
-        save_dir = "samples/"
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        path = ".".join(args.reconstruct_from.split("/")[-1].split(".")[:-1]) + \
-                "_{}".format(args.decoding_strategy)
-    
-    
-        vocab = vae.vocab
-        vocab_size = len(vocab)
-    
-        test_data = MonoTextData(args.test_data, label=args.label, vocab=vocab)
+    ## TODO: make new inference if needed.
+
+    # if args.reconstruct_from != "":
+    #     print('begin decoding')
+    #     vae.load_from_checkpoint(args.reconstruct_from, args = args)
+    #     vae.eval().to(args.device)
+    #     save_dir = "samples/"
+    #     if not os.path.exists(save_dir):
+    #         os.makedirs(save_dir)
+    #     path = ".".join(args.reconstruct_from.split("/")[-1].split(".")[:-1]) + \
+    #             "_{}".format(args.decoding_strategy)
     
     
-        test_data_batch = test_data.create_data_batch(batch_size=args.batch_size,
-                                                      device=device,
-                                                      batch_first=True)
+    #     vocab = vae.vocab
+    #     vocab_size = len(vocab)
+    
+    #     test_data = MonoTextData(args.test_data, label=args.label, vocab=vocab)
+    
+    
+    #     test_data_batch = test_data.create_data_batch(batch_size=args.batch_size,
+    #                                                   device=device,
+    #                                                   batch_first=True)
     
         
-        with torch.no_grad():
-            if args.decode_input != "":
-                decode_data = MonoTextData(args.decode_input, vocab=vae.vocab)
+    #     with torch.no_grad():
+    #         if args.decode_input != "":
+    #             decode_data = MonoTextData(args.decode_input, vocab=vae.vocab)
     
-                reconstruct(vae, decode_data, vocab, args.decoding_strategy, os.path.join(save_dir, path + ".rec")) #, args.device)
-                print("saved output in", path)
-            else:
-                z = vae.sample_from_prior(100)
+    #             reconstruct(vae, decode_data, vocab, args.decoding_strategy, os.path.join(save_dir, path + ".rec")) #, args.device)
+    #             print("saved output in", path)
+    #         else:
+    #             z = vae.sample_from_prior(100)
                 
-                # print(z)
-                sample_from_prior(vae, z, args.decoding_strategy,
-                    os.path.join(save_dir, path + ".sample"))
+    #             # print(z)
+    #             sample_from_prior(vae, z, args.decoding_strategy,
+    #                 os.path.join(save_dir, path + ".sample"))
 
-            if args.reconstruct_to != "":
+    #         if args.reconstruct_to != "":
                 
-                # test(vae, test_data_batch, "TEST", args)
-                reconstruct(vae, test_data_batch, vocab, args.decoding_strategy, args.reconstruct_to)
+    #             # test(vae, test_data_batch, "TEST", args)
+    #             reconstruct(vae, test_data_batch, vocab, args.decoding_strategy, args.reconstruct_to)
 
 
 

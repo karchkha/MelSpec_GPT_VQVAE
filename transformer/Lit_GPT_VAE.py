@@ -283,7 +283,8 @@ class GPT_VAE(pl.LightningModule):
                 loss_rc = self.decoder.reconstruct_error(batch_data, z).mean(dim=1)	
                 loss = loss_rc + self.kl_weight * fake_loss_kl
                 # pdb.set_trace()
-
+                self.log("train/fake_loss_kl", fake_loss_kl.mean(), prog_bar=True, logger=True, on_step=True, on_epoch=True)
+            
             elif self.args.fb == 3:	
                 loss, loss_rc, loss_kl = self.loss(batch_data, self.kl_weight, nsamples=self.args.nsamples)	
                 kl_mask = (loss_kl.mean() > self.args.target_kl).float()	
