@@ -37,7 +37,7 @@ def get_codes(mel_path, device, spec_crop_len, model, transforms, folder_name='c
     if not isFile:    
         try:
             print("\rworking on",mel_path, end="", flush = True)
-            mel = np.load(mel_path)
+            mel = np.load(mel_path).astype(np.float32) #this might need to be changed later with VQVAE 1024 (???)
             # mel = mel[:,:spec_crop_len]
             mel = transforms(mel)
             mel = 2 * mel - 1
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     paser.add_argument("-i", "--input_dir", default="data/vas/features")
     paser.add_argument("-m", "--model_dir", default="lightning_logs/2021-06-06T19-42-53_vas_codebook.pt")
     paser.add_argument("-emb_dim", "--embedding_dim", default=256)
-    paser.add_argument("-n_e", "--num_embeddings", default=128)
+    paser.add_argument("-n_e", "--num_embeddings", type=int, default=128)
     paser.add_argument("-crop", "--spec_crop_len", default=848)
     args = paser.parse_args()
     
@@ -87,14 +87,34 @@ if __name__ == '__main__':
     transforms = Crop([80, spec_crop_len], False)
     
     folders = os.listdir(input_dir)
-    for folder in folders:
-      mel_dir = input_dir + "/" + folder + "/" + "melspec_10s_22050hz"
+
+    if "vggsound" in input_dir:
+        print("In VGGSound")
+
+        for folder in folders:
+            if folder == "melspec_10s_22050hz":
+                mel_dir = input_dir + "/" + folder
+
+                mel_paths = glob(os.path.join(mel_dir, "*.npy"))
+
+                mel_paths.sort()
+
+                for mel_path in mel_paths:
+                    get_codes(mel_path, device, spec_crop_len, model, transforms)   
+                    # break    #### comment this out if this is running and not damaging you files
+            else:
+                pass
     
-      mel_paths = glob(os.path.join(mel_dir, "*.npy"))
-    
-      mel_paths = mel_paths
-    
-      mel_paths.sort()
-      # print(mel_paths)
-      for mel_path in mel_paths:
-        get_codes(mel_path, device, spec_crop_len, model, transforms)
+    elif "vas" in input_dir:
+        print("In VAS")
+
+        for folder in folders:
+            mel_dir = input_dir + "/" + folder + "/" + "melspec_10s_22050hz"
+
+            mel_paths = glob(os.path.join(mel_dir, "*.npy"))
+
+            mel_paths.sort()
+
+            for mel_path in mel_paths:
+                get_codes(mel_path, device, spec_crop_len, model, transforms)
+                break #### comment this out if this is running and not damaging you files

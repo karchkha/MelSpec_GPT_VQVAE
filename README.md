@@ -1,19 +1,19 @@
 # MelSpec_GPT_VQVAE
 
-Audio Generation model working with GPT3 and VQVAE compressed representation of MelSpectrograms
+Audio Generation model working with GPT-2 and VQVAE compressed representation of MelSpectrograms
 
 
 # Introduction
 
 Welcome to the MelSpec_GPT_VQVAE repository! 
 
-The project investigates the application of Transformer-based GPT3 models as a generative method for audio generation. The audio signal is represented as 128 unique tokens, which are compressed versions of mel-spectrograms. The study builds upon the Veqtor quantized encoder/decoder architecture described my other repository: https://github.com/karchkha/MelSpec_VQVAE, which in turn is partially taken from the paper "Taming Visually Guided Sound Generation" (https://arxiv.org/abs/2110.08791) and its corresponding repository (https://github.com/v-iashin/SpecVQGAN).
+The project investigates the application of Transformer-based GPT-2 models as a generative method for audio generation. The audio signal is represented as 128 unique tokens, which are compressed versions of mel-spectrograms. The study builds upon the Veqtor quantized encoder/decoder architecture described my other repository: https://github.com/karchkha/MelSpec_VQVAE, which in turn is partially taken from the paper "Taming Visually Guided Sound Generation" (https://arxiv.org/abs/2110.08791) and its corresponding repository (https://github.com/v-iashin/SpecVQGAN).
 
 The repository consists of two parts/directions:
 
-The first part focuses on the evaluation of GPT3 as a generative model when conditioned on audio class categories, such as "dog barking," "baby crying," "sneezing," and "fireworks," among others. This part of the project serves as a preliminary examination of the feasibility of audio generation, with the potential for future studies on time-aligned/controlled audio and music generation utilizing these models.
+The first part focuses on the evaluation of GPT-2 as a generative model when conditioned on audio class categories, such as "dog barking," "baby crying," "sneezing," and "fireworks," among others. This part of the project serves as a preliminary examination of the feasibility of audio generation, with the potential for future studies on time-aligned/controlled audio and music generation utilizing these models.
 
-The second part of the project involves the utilization of a Variational Autoencoder (VAE), with GPT3 modules in both the encoder and decoder sides. The encoder consists of an unmasked transformer that compresses the audio token sequence into a 1024-dimensional latent representation, which is then combined with a variance and a noise term to serve as the conditioning input for the decoder. The decoder comprises a masked autoregressive transformer that aims to reconstruct the whole token sequence, which is then translated back to a mel-spectrogram using a pretrained VQVAE decoder, followed by audio generation using a Mel_GAN vocoder. Both VQVAE amd Mel_GAN models are pretrained here and are not trained in this repository. For the VQVAE (pre-)training, plase see my other repository: (https://github.com/karchkha/MelSpec_VQVAE).
+The second part of the project involves the utilization of a Variational Autoencoder (VAE), with GPT-2 modules in both the encoder and decoder sides. The encoder consists of an unmasked transformer that compresses the audio token sequence into a 1024-dimensional latent representation, which is then combined with a variance and a noise term to serve as the conditioning input for the decoder. The decoder comprises a masked autoregressive transformer that aims to reconstruct the whole token sequence, which is then translated back to a mel-spectrogram using a pretrained VQVAE decoder, followed by audio generation using a Mel_GAN vocoder. Both VQVAE amd Mel_GAN models are pretrained here and are not trained in this repository. For the VQVAE (pre-)training, plase see my other repository: (https://github.com/karchkha/MelSpec_VQVAE).
 
 The second part of the project investigates a VAE generative model for the task of incorporating distributed latent representations of entire audio sequences. Unlike the standard autoregresive tranformers, which generates audio sequences one token at a time, this model also considers global audio representation and holistic properties of audio sequences such as audio content, style, and high-level features. The conversion of prior audio sequences into a compact representation via the encoder enables the generation of diverse and coherent audio sequences through deterministic decoder. By exploring the latent space, it is possible to create novel audio that interpolate between known audio sequences. This project presents techniques to address the difficult learning problem traditionally posed by VAE sequence models, and aims to demonstrate the effectiveness of the model in imputing missing audio tokens in the future.
 
@@ -38,7 +38,7 @@ $ pip -r install requirements.txt
 
 # Training GPT CLASS
 
-The training procedure for the first component of the project, where GPT-3 is conditioned on audio class categories, is governed by the following parameters:
+The training procedure for the first component of the project, where GPT-2 is conditioned on audio class categories, is governed by the following parameters:
 
 * `dataset`: The dataset to be used for training the model. This argument is required.
 * `experiment`: The name of the experiment. This argument is also required and will be used to name the checkpoints and tensorboard logs.
@@ -157,18 +157,33 @@ Another way, VAS data with ready Mel_spectrograms can be downloaded by running b
 cd ./data
 # ~7GB we only download spectrograms
 bash ./download_vas_features.sh
+
+# ~90GB we if we only download spectrograms
+bash ./download_vggsound_features.sh
+
 ```
 
-To speed up and lighten the training process, audio spectrograms in the database are converted to sequence tokens. These tokens are used in conjunction with the database for training and evaluation. To perform the conversion, run the following commands:
+Please be aware that, in vggsound in downloaded database for mel-specrtograms might be some damaged files that you need to remove or download them yourself from youtube. you will need to extract mel-spectrograms manually. The code for this is available in feature_extraction/extract_mel_spectrogram.py.
+
+To speed up and lighten the training process, audio spectrograms in the database are converted to sequence tokens. These tokens are used in conjunction with the database for training and evaluation. To perform the conversion for VAS database, run the following commands:
 
 ```bash
 $ cd feature_extraction
 
-$ python extract_codes.py --model_dir {VQVAE_model_directory}
+$ python extract_codes.py -i data/vas/features --model_dir {VQVAE_model_directory}
 ```
 This will generate additional files in the database where the token codes will be saved.
 
-TODO: adding vggsound data and running model on it.
+For the VGGsound database the procedure will be:
+
+```bash
+$ cd feature_extraction
+
+$ python extract_codes.py -i data/vggsound --model_dir {VQVAE_model_directory} -n_e 1024 
+```
+Plseae be aware to use coresponidng {VQVAE_model_directory} for each tranpose operation.
+
+
 
 # VQVAE
 

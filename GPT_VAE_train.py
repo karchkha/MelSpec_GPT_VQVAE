@@ -33,6 +33,7 @@ def init_config():
     parser.add_argument('--dataset', type=str, required=True, help='dataset to use')
     parser.add_argument('--experiment', type=str, required=True, default="yahoo", help='experiment name')
     parser.add_argument('--gpus', nargs='+', type=int, default=[0], help='GPU device IDs')
+    parser.add_argument('--num_nodes', type=int, default=1, help='nodes number')
 
 
     # optimization parameters
@@ -169,18 +170,18 @@ def main(args):
                         logger = logger,
                         num_sanity_val_steps=0,
                         devices= args.gpus if args.cuda else "auto", # [0, 1, 2],
+                        num_nodes = args.num_nodes,
                         strategy="ddp_find_unused_parameters_false" if len(args.gpus)>1 else None,
                         # precision = 16,
-#                         gradient_clip_val=clip_grad,
-#                         limit_train_batches = 400,
-#                         limit_val_batches= 400,
-#                          limit_test_batches= 2,
-#                          log_every_n_steps=2,
-#                          fast_dev_run = True,
+                        # gradient_clip_val=clip_grad,
+                        # limit_train_batches = 400,
+                        # limit_val_batches= 400,
+                        # limit_test_batches= 2,
+                        # log_every_n_steps=2,
+                        # fast_dev_run = True,
                         )
     
      ############################## training ##############################
-    
     
     if args.train:
     
@@ -206,28 +207,29 @@ def main(args):
      ########################## TESTING ############################
     
     if args.test== 1:
-           
+
+        trainer.test(model = vae, ckpt_path = args.resume)       
     
-        vocab = vae.vocab
-        vocab_size = len(vocab)
+        # vocab = vae.vocab
+        # vocab_size = len(vocab)
     
-        test_data = MonoTextData(args.test_data, label=args.label, vocab=vocab)
+        # test_data = MonoTextData(args.test_data, label=args.label, vocab=vocab)
     
     
-        test_data_batch = test_data.create_data_batch(batch_size=1,
-                                                      device=device,
-                                                      batch_first=True)
+        # test_data_batch = test_data.create_data_batch(batch_size=1,
+        #                                               device=device,
+        #                                               batch_first=True)
     
 
-        trainer.test(vae, ckpt_path = args.resume)
-        torch.cuda.empty_cache()
+        # trainer.test(vae, ckpt_path = args.resume)
+        # torch.cuda.empty_cache()
     
-        vae.to(device)
-        with torch.no_grad():
-            # calc_iwnll(vae, test_data_batch, args)
+        # vae.to(device)
+        # with torch.no_grad():
+        #     # calc_iwnll(vae, test_data_batch, args)
     
-            nll, ppl = calc_iwnll(vae, test_data_batch, args)
-            print('iw nll: %.4f, iw ppl: %.4f' % (nll, ppl))    
+        #     nll, ppl = calc_iwnll(vae, test_data_batch, args)
+        #     print('iw nll: %.4f, iw ppl: %.4f' % (nll, ppl))    
     
     
     ####################################### inference #####################################

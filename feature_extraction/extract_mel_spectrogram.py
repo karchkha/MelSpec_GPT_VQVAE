@@ -178,11 +178,14 @@ def get_spectrogram(audio_path, save_dir, length, folder_name='melspec_10s_22050
     else:
         raise NotImplementedError
 
+    # print('using', folder_name)
+    # mel_spec = TRANSFORMS(y)
+
     if save_results:
         os.makedirs(save_dir, exist_ok=True)
         audio_name = os.path.basename(audio_path).split('.')[0]
         np.save(P.join(save_dir, audio_name + '_mel.npy'), mel_spec)
-        np.save(P.join(save_dir, audio_name + '_audio.npy'), y)
+        # np.save(P.join(save_dir, audio_name + '_audio.npy'), y)
     else:
         return y, mel_spec
 

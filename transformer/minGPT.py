@@ -22,7 +22,7 @@ import pytorch_lightning as pl
 
 logger = logging.getLogger(__name__)
 
-from datasets.vas import DataModule
+from datasets.datamodule import DataModule
 
 from vqvae.big_model_attn_gan import LitVQVAE
 

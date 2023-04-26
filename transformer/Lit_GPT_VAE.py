@@ -12,7 +12,7 @@ from modules import GaussianLSTMEncoder, LSTMDecoder
 from transformer import GPTEncoder, GPTDecoder
 
 # from data import MonoTextData
-from datasets.vas import DataModule, VocabEntry
+from datasets.datamodule import DataModule
 
 
 from modules.utils import log_sum_exp
@@ -29,6 +29,7 @@ class GPT_VAE(pl.LightningModule):
         # self.vocab = VocabEntry()
         # self.vocab_size = len(self.vocab)
         self.len_val_data = 0
+        self.len_test_data = 0
         
         self.datamodule_loader()
         self.train_data = self.train_dataloader()
@@ -306,7 +307,7 @@ class GPT_VAE(pl.LightningModule):
         
         train_loss = report_loss / report_num_sents
         
-        self.log("train/loss", train_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log("train/loss", train_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True) #, batch_size=self.args.batch_size) 
         self.log("train/loss_rc", report_rec_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
         self.log("train/loss_kl", report_kl_loss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
         self.log("train/kl_weight",  self.kl_weight, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
@@ -1014,7 +1015,14 @@ class GPT_VAE(pl.LightningModule):
         return loader
         
     def test_dataloader(self):
-        pass
+
+        if "vggsound" in self.args.spec_dir_path:
+            test_data = self.data.test_dataset 
+            self.len_test_data = len(test_data)    
+            loader =  self.data.test_dataloader()
+            
+            return loader
+        # pass
         # test_data = MonoTextData(self.args.test_data, label=self.args.label, vocab=self.vocab)
     
 
