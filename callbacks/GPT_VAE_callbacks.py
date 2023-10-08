@@ -246,51 +246,51 @@ class TextLogger(Callback):
             # ############################################## beam reconstruct ##############################################################
             # ################################################################################################################################
 
-            # # TODO: make beam True False arg that decides if this part of the code runs or not!!!
-            # TODO: make readl beam search, this is some bullshit! :))
+            # TODO: make beam True False arg that decides if this part of the code runs or not!!!
+            # TODO: make real beam search, this is some bullshit! :))
 
 
-            # if self.args.test_interpolation:
-            #     self.audio_interpolation(model = pl_module, batch = batch, batch_idx = batch_idx, split = split, strategy = "beam")
+            if self.args.test_interpolation:
+                self.audio_interpolation(model = pl_module, batch = batch, batch_idx = batch_idx, split = split, strategy = "beam")
 
-            # ############# codebook reconstruction ##########################
-            # codes, atts = pl_module.reconstruct(codes_from_data, "beam")
-            # text_reconstructed = self.batch_to_sentence(codes)
-            # # pl_module.logger.experiment.add_text(f'{split}/epoch-{pl_module.current_epoch}/step-{batch_idx}/reconstraction', text_reconstructed, global_step=batch_idx)
-            # pl_module.logger.experiment.add_text(f'{split}/beam_reconstraction', text_reconstructed, global_step=pl_module.global_step)
+            ############# codebook reconstruction ##########################
+            codes, atts = pl_module.reconstruct(codes_from_data, "beam")
+            text_reconstructed = self.batch_to_sentence(codes)
+            # pl_module.logger.experiment.add_text(f'{split}/epoch-{pl_module.current_epoch}/step-{batch_idx}/reconstraction', text_reconstructed, global_step=batch_idx)
+            pl_module.logger.experiment.add_text(f'{split}/beam_reconstraction', text_reconstructed, global_step=pl_module.global_step)
             
             
             
-            # ######################### Visualise Attentions ###########################
-            # att_enc, att_dec = atts
-            # att_enc = att_enc[0].unsqueeze(0)
-            # att_dec = att_dec[0].unsqueeze(0)
+            ######################### Visualise Attentions ###########################
+            att_enc, att_dec = atts
+            att_enc = att_enc[0].unsqueeze(0)
+            att_dec = att_dec[0].unsqueeze(0)
             
-            # tag = f'{split}/encoder-beam'
-            # B, H, T, T = att_enc.shape
-            # grid = torchvision.utils.make_grid(self._visualize_attention(att_enc), nrow=H, normalize=True)
-            # pl_module.logger.experiment.add_image(tag, grid, global_step=pl_module.global_step)
+            tag = f'{split}/encoder-beam'
+            B, H, T, T = att_enc.shape
+            grid = torchvision.utils.make_grid(self._visualize_attention(att_enc), nrow=H, normalize=True)
+            pl_module.logger.experiment.add_image(tag, grid, global_step=pl_module.global_step)
             
-            # tag = f'{split}/decoder-beam'
-            # grid = torchvision.utils.make_grid(self._visualize_attention(att_dec), nrow=H, normalize=True)
-            # pl_module.logger.experiment.add_image(tag, grid, global_step=pl_module.global_step)
+            tag = f'{split}/decoder-beam'
+            grid = torchvision.utils.make_grid(self._visualize_attention(att_dec), nrow=H, normalize=True)
+            pl_module.logger.experiment.add_image(tag, grid, global_step=pl_module.global_step)
             
             
             
-            # ############# spectrum reconstruction ##########################
-            # if self.args.reconstruct_spec !="":
-            #     spec_reconstructions = self.codes_to_spec(codes, self.vqvae_model, pl_module)
-            #     spec_reconstructions_image = self.log_images(spec_reconstructions)
-            #     # pl_module.logger.experiment.add_image(f'{split}/epoch-{pl_module.current_epoch}/step-{batch_idx}/reconstraction', spec_reconstructions_image, global_step=batch_idx)
-            #     pl_module.logger.experiment.add_image(f'{split}/beam_reconstraction', spec_reconstructions_image, global_step=pl_module.global_step)
+            ############# spectrum reconstruction ##########################
+            if self.args.reconstruct_spec !="":
+                spec_reconstructions = self.codes_to_spec(codes, self.vqvae_model, pl_module)
+                spec_reconstructions_image = self.log_images(spec_reconstructions)
+                # pl_module.logger.experiment.add_image(f'{split}/epoch-{pl_module.current_epoch}/step-{batch_idx}/reconstraction', spec_reconstructions_image, global_step=batch_idx)
+                pl_module.logger.experiment.add_image(f'{split}/beam_reconstraction', spec_reconstructions_image, global_step=pl_module.global_step)
                 
             
-            # if self.args.vocoder !="":
-            #     waves = self.spec_to_audio_to_st(spec_reconstructions, 22050, vocoder=self.melgan)
-            #     waves = torch.from_numpy(waves['vocoder']).unsqueeze(1)
-            #     # pl_module.logger.experiment.add_audio(f'{split}/epoch-{pl_module.current_epoch}/step-{batch_idx}/reconstraction_audio', waves, batch_idx, 22050)
-            #     pl_module.logger.experiment.add_audio(f'{split}/beam_reconstraction_audio', waves, pl_module.global_step, 22050)
-            
+            if self.args.vocoder !="":
+                waves = self.spec_to_audio_to_st(spec_reconstructions, 22050, vocoder=self.melgan)
+                waves = torch.from_numpy(waves['vocoder']).unsqueeze(1)
+                # pl_module.logger.experiment.add_audio(f'{split}/epoch-{pl_module.current_epoch}/step-{batch_idx}/reconstraction_audio', waves, batch_idx, 22050)
+                pl_module.logger.experiment.add_audio(f'{split}/beam_reconstraction_audio', waves, pl_module.global_step, 22050)
+
 
 #             ################# Sampling form prior ####################
             
@@ -325,8 +325,8 @@ class TextLogger(Callback):
 
         spec = batch['image']
 
-        spec_from = spec[0].unsqueeze(0).unsqueeze(0).to(self.args.device)
-        spec_to = spec[1].unsqueeze(0).unsqueeze(0).to(self.args.device)
+        spec_from = spec[0].unsqueeze(0).unsqueeze(0).to(torch.float32).to(self.args.device)
+        spec_to = spec[1].unsqueeze(0).unsqueeze(0).to(torch.float32).to(self.args.device)
             
         ###### get codebook of those data  ###
         
